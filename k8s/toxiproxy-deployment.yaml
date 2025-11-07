@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: toxiproxy
+  namespace: resilience-demo
+spec:
+  selector:
+    app: toxiproxy
+  ports:
+    - name: proxy
+      port: 8888
+      targetPort: 8888
+    - name: api
+      port: 8474
+      targetPort: 8474
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toxiproxy
+  namespace: resilience-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: toxiproxy
+  template:
+    metadata:
+      labels:
+        app: toxiproxy
+    spec:
+      containers:
+      - name: toxiproxy
+        image: shopify/toxiproxy:2.1.4
+        args: ["-host=0.0.0.0:8474"]
+        ports:
+        - containerPort: 8474
+        - containerPort: 8888

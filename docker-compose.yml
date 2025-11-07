@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  server:
+    build: ./
+    command: ["python", "app.py"]
+    ports:
+      - "5050:5000"
+    networks:
+      - socket-net
+
+  test:
+    build: ./
+    command: ["python3", "-m", "pytest", "-v", "rest_tests.py"]
+    depends_on:
+      - server
+    networks:
+      - socket-net
+
+networks:
+  socket-net:

@@ -1,0 +1,96 @@
+{
+  "version": "1.0.0",
+  "title": "Toxiproxy latency (create + add toxic + probe)",
+  "description": "Create a proxy in Toxiproxy that forwards toxiproxy:8888 -> backend:5000, add latency with jitter, probe breaker-status (no sleeps)",
+  "steady-state-hypothesis": {
+    "title": "Frontend is healthy before chaos",
+    "probes": [
+      {
+        "type": "probe",
+        "name": "frontend_is_responding",
+        "tolerance": 200,
+        "provider": {
+          "type": "http",
+          "url": "http://localhost:8080/health",
+          "timeout": 5,
+          "verify_tls": false
+        }
+      }
+    ]
+  },
+  "method": [
+    {
+      "type": "action",
+      "name": "create_proxy_via_http",
+      "provider": {
+        "type": "http",
+        "url": "http://toxiproxy:8474/proxies",
+        "method": "POST",
+        "timeout": 10,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "name": "backend-proxy",
+          "listen": "0.0.0.0:8888",
+          "upstream": "backend:5000"
+        }
+      }
+    },
+    {
+      "type": "action",
+      "name": "add_latency_toxic_via_http",
+      "provider": {
+        "type": "http",
+        "url": "http://toxiproxy:8474/proxies/backend-proxy/toxics",
+        "method": "POST",
+        "timeout": 10,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "name": "latency",
+          "type": "latency",
+          "stream": "downstream",
+          "attributes": {
+            "latency": 1500,
+            "jitter": 200
+          }
+        }
+      }
+    },
+    {
+      "type": "probe",
+      "name": "check_breaker_status_immediate",
+      "tolerance": 200,
+      "provider": {
+        "type": "http",
+        "url": "http://localhost:8080/breaker-status",
+        "timeout": 5,
+        "verify_tls": false
+      }
+    }
+  ],
+  "rollbacks": [
+    {
+      "type": "action",
+      "name": "remove_toxic_via_http",
+      "provider": {
+        "type": "http",
+        "url": "http://toxiproxy:8474/proxies/backend-proxy/toxics/latency",
+        "method": "DELETE",
+        "timeout": 10
+      }
+    },
+    {
+      "type": "action",
+      "name": "remove_proxy_via_http",
+      "provider": {
+        "type": "http",
+        "url": "http://toxiproxy:8474/proxies/backend-proxy",
+        "method": "DELETE",
+        "timeout": 10
+      }
+    }
+  ]
+}
