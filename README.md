@@ -18,7 +18,7 @@ The **Circuit Breaker pattern** prevents this: after a threshold of failures, th
                     ┌──────────────────────────────────────────┐
                     │            Kubernetes Cluster            │
                     │                                          │
-  HTTP Client ────► │  Frontend (client)  ──────────────────► │──► Backend Service
+  HTTP Client ────► │  Frontend (client)  ──────────────────►  │──► Backend Service
                     │   pybreaker + tenacity                   │    (simulates failures)
                     │        │                                 │
                     │        │ (chaos experiments)             │
@@ -48,9 +48,9 @@ The **Circuit Breaker pattern** prevents this: after a threshold of failures, th
     │    probe succeeds                ▼
     └──────────────────────────── HALF-OPEN
                                        │
-                              probe fails │
-                                         ▼
-                                       OPEN
+                           probe fails │
+                                       ▼
+                                      OPEN
 ```
 
 | State | Behaviour |
